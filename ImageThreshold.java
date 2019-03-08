@@ -1,5 +1,3 @@
-package assign3_3301;
-
 // Skeletal program for the "Image Threshold" assignment
 // Written by:  Minglun Gong
 import java.util.*;
@@ -118,10 +116,133 @@ public class ImageThreshold extends Frame implements ActionListener {
             target.repaint();
         }
 
-        if (((Button) e.getSource()).getLabel().equals("Otsu's Method")) {
+        if ( ((Button)e.getSource()).getLabel().equals("Otsu's Method") ) {
+            int ptr = 0;
+            int red=0, green=0, blue=0, black =0;
+                    
+            int[] rH = new int[256];
+            int[] gH = new int[256];
+            int[] bH = new int[256];
+            int[] histData = new int[256];
+            for ( int y=0, i=0 ; y<height ; y++ ) {
+                for ( int x=0 ; x<width ; x++, i++ ) {
+                    Color clr = new Color(source.image.getRGB(x, y));
+                    red = clr.getRed();
+                    green = clr.getGreen();
+                    blue = clr.getBlue();
+                    rH[red]++;
+                    gH[green]++;
+                    bH[blue]++;
+                }
+            }
 
+            // Total number of pixels
+            int total = width * height;
+
+            float sum = 0;
+            float sumR=0;
+            float sumG=0;
+            float sumB=0;
+            for (int t=0 ; t<256 ; t++) {
+                sum += t * histData[t];
+                sumR += t * rH[t];
+                sumG += t * gH[t];
+                 sumB += t * bH[t];
+            }
+
+            float sum2 = 0;
+            float sum2R = 0;
+            float sum2G = 0;
+            float sum2B = 0;
+            int wBack = 0;
+            int wBackR = 0;
+            int wBackG = 0;
+            int wBackB = 0;
+            int wF = 0;
+            int wFR = 0;
+            int wFG = 0;
+            int wFB = 0;
+
+            float varMax = 0;
+            float varMaxR = 0;
+            float varMaxG = 0;
+            float varMaxB = 0;
+            float threshold = 0;
+            float thresholdR = 0;
+            float thresholdG = 0;
+            float thresholdB = 0;
+                    
+
+            for (int t=0 ; t<256 ; t++) {
+                wBack += histData[t];               // Weight Background
+                wBackR += rH[t]; 
+                wBackG += gH[t]; 
+                wBackB += bH[t]; 
+                if (wBack == 0) continue;
+
+                wF = total - wBack;                 // Weight Foreground
+                wFR = total - wBackR;
+                wFG = total - wBackG;
+                wFB = total - wBackB;
+                if (wF == 0) break;
+
+                sum2 += (float) (t * histData[t]);
+                sum2R += (float) (t * rH[t]);
+                sum2G += (float) (t * gH[t]);
+                sum2B += (float) (t * bH[t]);
+                
+                // Mean Background
+                float mBack = sum2 / wBack;           
+                float mBackR = sum2R / wBackR; 
+                float mBackG = sum2G / wBackG; 
+                float mBackB = sum2B / wBackB; 
+                
+                // Mean Foreground
+                float mF = (sum - sum2) / wF;    
+                float mFR = (sumR - sum2R) / wFR;
+                float mFG = (sumG - sum2G) / wFG;
+                float mFB = (sumB - sum2B) / wFB;         
+
+                // Calculate Between Class Variance
+                float varBetween = (float)wBack * (float)wF * (mBack - mF) * (mBack - mF);
+                float varBetweenR = (float)wBackR * (float)wFR * (mBackR - mFR) * (mBackR - mFR);
+                float varBetweenG = (float)wBackG * (float)wFG * (mBackG - mFG) * (mBackG - mFG);
+                float varBetweenB = (float)wBackB * (float)wFB * (mBackB - mFB) * (mBackB - mFB);
+
+                // Check if new maximum found
+                if (varBetween > varMax) {
+                varMax = varBetween;
+                threshold = t;
+                }
+                if (varBetweenR > varMaxR) {
+                    varMaxR = varBetweenR;
+                    threshold = t;
+                }
+                if (varBetweenG > varMaxG) {
+                    varMaxG = varBetweenG;
+                    thresholdG = t;
+                }
+                if (varBetweenB > varMaxB) {
+                    varMaxB = varBetweenB;
+                    thresholdB = t;
+                }
+            }                 
+            
+            for ( int y=0, i=0 ; y<height ; y++ ) {
+                for ( int x=0 ; x<width ; x++, i++ ) {
+                    Color clr = new Color(source.image.getRGB(x, y));
+                    red = clr.getRed();
+                    green = clr.getGreen();
+                    blue = clr.getBlue();
+                    red = (red < thresholdR) ? 0 : GREY_LEVEL - 1;
+                    green = (green < thresholdG) ? 0 : GREY_LEVEL - 1;
+                    blue = (blue < thresholdB) ? 0 : GREY_LEVEL - 1;
+                    target.image.setRGB(x, y, red << 16 | green << 8 | blue);
+                }
+            }                 
+         target.repaint();   
         }
-
+        
         if (((Button) e.getSource()).getLabel().equals("Automatic Selection")) {
 
             Vector<Integer> groupR1 = new Vector<Integer>();
